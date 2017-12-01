@@ -4,17 +4,12 @@ use std::io::prelude::*;
 use std::error::Error;
 
 fn main() {
-    match run() {
-        Ok(answer) => {
-            println!("CAPTCHA value is {}", answer);
-        }
-        Err(error) => {
-            eprintln!("ERROR: {}", error);
-        }
+    if let Err(error) = run() {
+        eprintln!("ERROR: {}", error);
     }
 }
 
-fn run() -> Result<usize, Box<Error>> {
+fn run() -> Result<(), Box<Error>> {
     let input = File::open("puzzle-input.txt")?;
     let mut reader = BufReader::new(input);
     let mut contents = String::new();
@@ -37,12 +32,24 @@ fn run() -> Result<usize, Box<Error>> {
         })
         .collect();
 
-    let answer = captcha(&digits);
-    Ok(answer)
+    println!("CAPTCHA 1 value is {}", captcha1(&digits));
+    println!("CAPTCHA 2 value is {}", captcha2(&digits));
+
+    Ok(())
 }
 
-fn captcha(digits: &[usize]) -> usize {
+fn captcha1(digits: &[usize]) -> usize {
     let next_digit = digits.iter().cycle().skip(1);
+
+    digits
+        .iter()
+        .zip(next_digit)
+        .filter_map(|(digit, next)| if digit == next { Some(digit) } else { None })
+        .sum()
+}
+
+fn captcha2(digits: &[usize]) -> usize {
+    let next_digit = digits.iter().cycle().skip(digits.len() / 2);
 
     digits
         .iter()
@@ -53,25 +60,56 @@ fn captcha(digits: &[usize]) -> usize {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+    mod part1 {
+        use captcha1;
 
-    #[test]
-    fn one_one_two_two_gives_three() {
-        assert_eq!(captcha(&[1, 1, 2, 2]), 3);
+        #[test]
+        fn one_one_two_two_gives_three() {
+            assert_eq!(captcha1(&[1, 1, 2, 2]), 3);
+        }
+
+        #[test]
+        fn four_ones_gives_four() {
+            assert_eq!(captcha1(&[1, 1, 1, 1]), 4);
+        }
+
+        #[test]
+        fn one_two_three_four_gives_zero() {
+            assert_eq!(captcha1(&[1, 2, 3, 4]), 0);
+        }
+
+        #[test]
+        fn sequence_starting_and_ending_with_nine() {
+            assert_eq!(captcha1(&[9, 1, 2, 1, 2, 1, 2, 9]), 9);
+        }
     }
 
-    #[test]
-    fn four_ones_gives_four() {
-        assert_eq!(captcha(&[1, 1, 1, 1]), 4);
-    }
+    mod part2 {
+        use captcha2;
 
-    #[test]
-    fn one_two_three_four_gives_zero() {
-        assert_eq!(captcha(&[1, 2, 3, 4]), 0);
-    }
+        #[test]
+        fn input_1212_gives_6() {
+            assert_eq!(captcha2(&[1, 2, 1, 2]), 6);
+        }
 
-    #[test]
-    fn sequence_starting_and_ending_with_nine() {
-        assert_eq!(captcha(&[9, 1, 2, 1, 2, 1, 2, 9]), 9);
+        #[test]
+        fn input_1221_gives_0() {
+            assert_eq!(captcha2(&[1, 2, 2, 1]), 0);
+        }
+
+        #[test]
+        fn input_123425_gives_4() {
+            assert_eq!(captcha2(&[1, 2, 3, 4, 2, 5]), 4);
+        }
+
+        #[test]
+        fn input_123123_gives_12() {
+            assert_eq!(captcha2(&[1, 2, 3, 1, 2, 3]), 12);
+        }
+
+        #[test]
+        fn input_12131415_gives_4() {
+            assert_eq!(captcha2(&[1, 2, 1, 3, 1, 4, 1, 5]), 4);
+        }
     }
 }
