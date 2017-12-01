@@ -1,0 +1,6 @@
+[package]
+name = "aoc_2017_1_captcha"
+version = "0.1.0"
+authors = ["Alistair Green <alistairmgreen@gmail.com>"]
+
+[dependencies]
